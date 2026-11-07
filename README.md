@@ -62,7 +62,7 @@ rolling-sky-plus-mobile/
 │   ├── res/                       # 图标、启动页、主题
 │   └── assets/game/               # 离线游戏本体（HTML/CSS/JS/Three.js）
 ├── design/make_icon.py            # 生成各密度桌面图标
-├── keystore/neonskyway.jks        # 本地更新用签名，勿用于上架
+├── keystore/neonskyway.jks        # 本地更新用签名（.gitignore 排除，不提交）
 ├── build.sh                       # 无 Gradle 的手动构建脚本
 ├── dist/NeonSkyway-v1.1.0.apk     # 成品
 ├── web/                           # 网页版源码（与 Android assets 同源）
