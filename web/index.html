@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050713">
+<title>霓虹轨道 · Neon Skyway</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game" aria-label="霓虹轨道游戏画面"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+
+  <!-- ===================== HUD ===================== -->
+  <div id="hud" class="hud hidden">
+    <div class="hud-top">
+      <div class="stat-cluster">
+        <div class="stat distance-stat">
+          <span class="stat-label">距离</span>
+          <div class="stat-value"><b id="hud-distance">0</b><em>m</em></div>
+        </div>
+        <div class="stat crystal-stat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 18 9 12 22 6 9Z"/><path d="M6 9h12M12 2v20" class="line"/></svg>
+          <div class="stat-value"><b id="hud-crystals">0</b><em>/ <span id="hud-crystals-total">0</span></em></div>
+        </div>
+      </div>
+
+      <div class="progress-cluster">
+        <div class="progress-labels">
+          <span id="hud-zone">晨曦回廊</span>
+          <span id="hud-progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="hud-progress-fill" class="progress-fill"></div>
+          <i class="checkpoint-mark" style="left:25%"></i>
+          <i class="checkpoint-mark" style="left:50%"></i>
+          <i class="checkpoint-mark" style="left:75%"></i>
+          <i class="finish-mark"></i>
+          <div id="hud-progress-dot" class="progress-dot"></div>
+        </div>
+      </div>
+
+      <div class="hud-actions">
+        <div id="hud-hearts" class="hearts" aria-label="生命值"></div>
+        <button id="btn-sound" class="icon-btn" title="声音 (M)" aria-label="切换声音">
+          <svg class="sound-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.6 6a9 9 0 0 1 0 12" class="wave"/></svg>
+          <svg class="sound-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="m17 9 5 5m0-5-5 5" class="wave"/></svg>
+        </button>
+        <button id="btn-pause" class="icon-btn" title="暂停 (P)" aria-label="暂停">
+          <svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="combo-toast" class="combo-toast"></div>
+    <div id="zone-banner" class="zone-banner">
+      <span class="zone-index">01</span>
+      <div><b>晨曦回廊</b><small>AURORA GATEWAY</small></div>
+    </div>
+    <div id="checkpoint-toast" class="checkpoint-toast">检查点 · 能量恢复</div>
+
+    <div class="hud-bottom">
+      <div id="control-hint" class="control-hint">
+        <span><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> 转向</span>
+        <i></i>
+        <span>踩跳板自动起跳</span>
+        <i></i>
+        <span class="touch-hint">拖动转向 · 踩跳板自动起跳</span>
+      </div>
+      <div class="speed-meter"><span>速度</span><div class="speed-bars" id="speed-bars"></div></div>
+    </div>
+  </div>
+
+  <!-- ===================== COUNTDOWN ===================== -->
+  <div id="countdown" class="countdown hidden">
+    <div class="countdown-ring"></div>
+    <span id="countdown-num">3</span>
+    <small id="countdown-label">准备出发</small>
+  </div>
+
+  <!-- ===================== MENU ===================== -->
+  <div id="menu" class="overlay menu-overlay">
+    <div class="menu-glow"></div>
+    <header class="menu-header">
+      <div class="brand-mark"><i></i><i></i><i></i></div>
+      <span class="eyebrow">A NEON ENDLESS JOURNEY</span>
+    </header>
+
+    <main class="menu-main">
+      <div class="title-wrap">
+        <p class="title-kicker">滚 动 · 跃 起 · 穿 越</p>
+        <h1 class="game-title" data-text="霓虹轨道">
+          <span>霓虹轨道</span>
+          <small>NEON SKYWAY</small>
+        </h1>
+        <p class="tagline">沿着悬浮于星海之上的光轨，<br>在 1200 米的终点之前，别停下。</p>
+      </div>
+
+      <div class="menu-panel">
+        <button id="btn-start" class="primary-btn">
+          <span>开始挑战</span>
+          <svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg>
+        </button>
+
+        <div class="best-card">
+          <div class="best-head"><span>个人最佳</span><em id="best-label">尚未启程</em></div>
+          <div class="best-stats">
+            <div><b id="best-score">0</b><span>得分</span></div>
+            <div><b id="best-distance">0</b><span>最远距离</span></div>
+            <div><b id="best-crystals">0</b><span>星晶</span></div>
+          </div>
+        </div>
+
+        <p class="menu-touch-tip"><i></i>拖动转向 · 踩跳板自动起跳</p>
+
+        <button id="btn-changelog" class="changelog-btn" aria-label="查看更新日志">
+          <span class="changelog-dot" id="changelog-dot"></span>
+          <span class="changelog-label">更新日志</span>
+          <em>v1.1.0</em>
+          <svg viewBox="0 0 24 24"><path d="M9 5h9v14H9M4 9h5v10H4zM13 9h3M13 13h3"/></svg>
+        </button>
+
+        <div class="quick-guide">
+          <div class="guide-item"><span class="guide-icon steer">↔</span><div><b>灵巧转向</b><small>A / D、方向键或拖动</small></div></div>
+          <div class="guide-item"><span class="guide-icon jump">⋀</span><div><b>跳板起跳</b><small>踩上发光跳板自动腾空</small></div></div>
+          <div class="guide-item"><span class="guide-icon gem">◆</span><div><b>收集星晶</b><small>刷新最高得分</small></div></div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="menu-footer">
+      <span>拖动转向 · 踩跳板自动起跳 · 支持触屏</span>
+      <span class="version">NEON SKYWAY / v1.1.0</span>
+    </footer>
+  </div>
+
+  <!-- ===================== PAUSE ===================== -->
+  <div id="pause" class="overlay pause-overlay hidden">
+    <div class="modal">
+      <span class="modal-eyebrow">INTERMISSION</span>
+      <h2>暂停中</h2>
+      <p>星空会等你准备好。</p>
+      <div class="modal-actions">
+        <button id="btn-resume" class="primary-btn small"><span>继续滑行</span><svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg></button>
+        <button id="btn-restart-pause" class="ghost-btn">重新开始</button>
+        <button id="btn-menu-pause" class="ghost-btn">返回主页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== RESULT ===================== -->
+  <div id="result" class="overlay result-overlay hidden">
+    <div class="result-card">
+      <div class="result-badge" id="result-badge">RUN COMPLETE</div>
+      <h2 id="result-title">冲线成功</h2>
+      <p id="result-subtitle">你穿过了整片霓虹天空。</p>
+      <div class="result-score">
+        <span>本局得分</span>
+        <b id="result-score">0</b>
+        <em id="result-best">NEW RECORD</em>
+      </div>
+      <div class="result-grid">
+        <div><b id="result-distance">0</b><span>距离 / m</span></div>
+        <div><b id="result-crystals">0</b><span>星晶</span></div>
+        <div><b id="result-time">0:00</b><span>用时</span></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btn-again" class="primary-btn small"><span>再来一次</span><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.6M4 4v5h5"/></svg></button>
+        <button id="btn-menu" class="ghost-btn">返回主页</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== CHANGELOG ===================== -->
+  <div id="changelog" class="overlay changelog-overlay hidden">
+    <div class="changelog-card">
+      <div class="changelog-head">
+        <span class="modal-eyebrow">RELEASE NOTES</span>
+        <span class="version-chip">v1.1.0 · NEW</span>
+      </div>
+      <h2>节奏革命</h2>
+      <p class="changelog-lead">这一次，跳跃交给跳板。</p>
+
+      <div class="changelog-list">
+        <article>
+          <b>01</b>
+          <div><strong>跳板即节拍</strong><p>移除手动跳跃。踩上发光跳板才会自动起跳，每一次腾空都落在 120 BPM 的重拍上。</p></div>
+        </article>
+        <article>
+          <b>02</b>
+          <div><strong>整条轨道重新编排</strong><p>1200 米改为固定节奏谱：跳板、低墙、缺口与星晶弧全部按拍布置，不再是随机生成。</p></div>
+        </article>
+        <article>
+          <b>03</b>
+          <div><strong>六区奇观</strong><p>晨曦光环、裂谷碑阵、赤霞涡轮、镜面拱廊、陨石群与天穹钟摆，每个区域都有新的地标。</p></div>
+        </article>
+        <article>
+          <b>04</b>
+          <div><strong>五种新障碍</strong><p>旋转棱镜、镜面板、陨石、光环与漂移平台加入轨道；它们会动，但碰撞判定保持公平。</p></div>
+        </article>
+        <article>
+          <b>05</b>
+          <div><strong>原创电音 · 120 BPM</strong><p>新的合成器编曲与跳板同相：踩板瞬间触发 impact，提前一拍有 riser，副歌会跟着你的腾空推进。</p></div>
+        </article>
+        <article>
+          <b>06</b>
+          <div><strong>更顺的触屏体验</strong><p>手机端只保留拖动转向，提示、暂停、结算和短横屏布局一并适配。</p></div>
+        </article>
+      </div>
+
+      <div class="changelog-foot">
+        <span>2026.11.07 · NEON SKYWAY</span>
+        <button id="btn-changelog-close" class="primary-btn small"><span>进入轨道</span><svg viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="rotate-hint" class="rotate-hint">
+    <div class="rotate-phone"></div>
+    <p>横屏体验更佳</p>
+  </div>
+
+  <div id="webgl-error" class="webgl-error hidden">
+    <h2>无法启动 3D 引擎</h2>
+    <p>请使用支持 WebGL 的现代浏览器打开本页面。</p>
+  </div>
+</div>
+<script src="vendor/three.min.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

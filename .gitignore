@@ -1,0 +1,8 @@
+.toolchain/
+.emulator/
+build/
+dist/screens/
+keystore/
+*.jks
+*.idsig
+.DS_Store
